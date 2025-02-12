@@ -1,7 +1,8 @@
 from typing import List, Iterable, Optional
 from abc import ABC, abstractmethod
 
-from dbg.explanation.candidate import ExplanationSet
+from dbg.explanation.candidate import ExplanationSet, Explanation
+from dbg.learner.metric import FitnessStrategy, RecallPriorityFitness
 from dbg.data.input import Input
 
 
@@ -9,8 +10,9 @@ class Learner(ABC):
     """
     A candidate learner is responsible for learning candidate formulas from a set
     """
-    def __init__(self):
+    def __init__(self, sorting_strategy: FitnessStrategy = RecallPriorityFitness()):
         self.explanations: ExplanationSet = ExplanationSet()
+        self.sorting_strategy = sorting_strategy
 
     @abstractmethod
     def learn_explanation(
@@ -37,4 +39,14 @@ class Learner(ABC):
         Get the best constraints that have been learned.
         :return Optional[List[Candidate]]: The best learned candidates.
         """
-        raise NotImplementedError()
+        result = ExplanationSet()
+        if self.explanations:
+            sorted_explanation = self._get_sorted_explanations()
+            for explanation in sorted_explanation:
+                if self.sorting_strategy.is_equal(explanation, sorted_explanation[0]):
+                    result.append(explanation)
+
+        return result
+
+    def _get_sorted_explanations(self) -> Optional[List[Explanation]]:
+        return sorted(self.explanations, key=lambda exp: self.sorting_strategy.evaluate(exp))
