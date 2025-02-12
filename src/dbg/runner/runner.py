@@ -3,7 +3,7 @@ from typing import Union, Set
 
 from dbg.data.input import Input
 from dbg.data.oracle import OracleResult
-from fdlearn.types import OracleType, BatchOracleType
+from dbg.types import OracleType, BatchOracleType
 
 
 class ExecutionHandler(ABC):
@@ -19,10 +19,10 @@ class ExecutionHandler(ABC):
 
 
 class SingleExecutionHandler(ExecutionHandler):
-    def _get_label(self, test_input: Union[FandangoInput]) -> OracleResult:
+    def _get_label(self, test_input: Union[Input]) -> OracleResult:
         return self.oracle(test_input)
 
-    def label(self, test_inputs: Set[FandangoInput], **kwargs):
+    def label(self, test_inputs: Set[Input], **kwargs):
         for inp in test_inputs:
             label = self._get_label(inp)
             inp.oracle = label
@@ -30,14 +30,14 @@ class SingleExecutionHandler(ExecutionHandler):
 
 
 class BatchExecutionHandler(ExecutionHandler):
-    def _get_label(self, test_inputs: Set[FandangoInput]) -> list[tuple[FandangoInput, OracleResult]]:
+    def _get_label(self, test_inputs: Set[Input]) -> list[tuple[Input, OracleResult]]:
         results = self.oracle(test_inputs)
 
         return [
             (inp, results[inp]) for inp in test_inputs
         ]
 
-    def label(self, test_inputs: Set[FandangoInput], **kwargs):
+    def label(self, test_inputs: Set[Input], **kwargs):
         test_results = self._get_label(test_inputs)
 
         for inp, test_result in test_results:
