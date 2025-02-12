@@ -4,7 +4,7 @@ import time
 
 from dbg.data.input import Input
 from dbg.data.grammar import AbstractGrammar
-from dbg.explanation.candidate import ExplanationSet
+from dbg.explanation.candidate import ExplanationSet, Explanation
 from dbg.types import OracleType
 from dbg.learner.learner import Learner
 from dbg.learner.metric import RecallPriorityStringLengthFitness
@@ -187,7 +187,7 @@ class HypothesisBasedExplainer(InputExplainer, ABC):
         """
         raise NotImplementedError()
 
-    def negate_candidates(self, candidates: ExplanationSet) -> ExplanationSet:
+    def negate_candidates(self, candidates: ExplanationSet) -> list[Explanation]:
         """
         Negate the learned candidates.
         """

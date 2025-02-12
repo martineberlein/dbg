@@ -14,5 +14,5 @@ class ExplanationNegation(ABC):
 
 class DefaultExplanationNegation(ExplanationNegation):
 
-    def negate_explanations(self, explanations: ExplanationSet) -> list[Explanation]:
-        return [-explanation for explanation in explanations]
+    def negate_explanations(self, explanations: ExplanationSet) -> ExplanationSet:
+        return ExplanationSet([-explanation for explanation in explanations])

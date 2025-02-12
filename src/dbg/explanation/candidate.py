@@ -86,6 +86,12 @@ class ExplanationSet:
         """
         return iter(self.explanations)
 
+    def __add__(self, other):
+        """
+        Add two candidate sets together.
+        """
+        return ExplanationSet(self.explanations + other.explanations)
+
     def append(self, candidate: Explanation):
         """
         Add a candidate to the candidate set.
