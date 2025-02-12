@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Union, Iterable, Set, Optional, List
+from typing import Union, Iterable, Set, Optional
 import time
 
 from dbg.data.input import Input
@@ -8,10 +8,11 @@ from dbg.explanation.candidate import ExplanationSet
 from dbg.types import OracleType
 from dbg.learner.learner import Learner
 from dbg.learner.metric import RecallPriorityStringLengthFitness
+from dbg.learner.negation import ExplanationNegation, DefaultExplanationNegation
 from dbg.generator.generator import Generator
 from dbg.generator.engine import Engine, SingleEngine
 from dbg.runner.runner import ExecutionHandler, SingleExecutionHandler
-
+from dbg.logger import LOGGER, LoggerLevel
 
 
 class InputExplainer(ABC):
@@ -24,12 +25,12 @@ class InputExplainer(ABC):
         grammar: AbstractGrammar,
         oracle: OracleType,
         initial_inputs: Union[Iterable[str], Iterable[Input]],
-        # logger_level: LoggerLevel = LoggerLevel.INFO,
+        logger_level: LoggerLevel = LoggerLevel.INFO,
     ):
         """
         Initialize the input feature debugger with a grammar, oracle, and initial inputs.
         """
-        # LOGGER.setLevel(logger_level.value)
+        LOGGER.setLevel(logger_level.value)
 
         self.initial_inputs = initial_inputs
         self.grammar = grammar
@@ -69,6 +70,7 @@ class HypothesisBasedExplainer(InputExplainer, ABC):
         self.strategy = RecallPriorityStringLengthFitness()
 
         self.learner: Learner = learner
+        self.constraint_negation: ExplanationNegation = DefaultExplanationNegation()
         self.generator: Generator = generator
         self.engine: Engine = SingleEngine(generator)
 
@@ -133,20 +135,20 @@ class HypothesisBasedExplainer(InputExplainer, ABC):
         """
         iteration = 0
         start_time = self.set_timeout()
-        # LOGGER.info("Starting the hypothesis-based input feature debugger.")
+        LOGGER.info("Starting the hypothesis-based input feature debugger.")
         try:
             test_inputs: Set[Input] = self.prepare_test_inputs()
 
             while self.check_iteration_limits(iteration, start_time):
-                # LOGGER.info(f"Starting iteration {iteration}.")
+                LOGGER.info(f"Starting iteration {iteration}.")
                 new_test_inputs = self.hypothesis_loop(test_inputs)
                 test_inputs.update(new_test_inputs)
 
                 iteration += 1
         except TimeoutError as e:
-            logging.error(e)
+            LOGGER.error(e)
         except Exception as e:
-            logging.error(e)
+            LOGGER.error(e)
         finally:
             return self.get_best_candidates()
 
@@ -169,21 +171,15 @@ class HypothesisBasedExplainer(InputExplainer, ABC):
         labeled_test_inputs = self.run_test_inputs(inputs)
         return labeled_test_inputs
 
-    def learn_candidates(self, test_inputs: Set[Input]) -> Optional[List[FandangoConstraintCandidate]]:
+    @abstractmethod
+    def learn_candidates(self, test_inputs: Set[Input]) -> ExplanationSet:
         """
         Learn the candidates (failure diagnoses) from the test inputs.
         """
         raise NotImplementedError()
 
-    @staticmethod
-    def negate_candidates(candidates: List[FandangoConstraintCandidate]):
-        """
-        Negate the learned candidates.
-        """
-        negated_candidates = construct_negations(candidates)
-        return negated_candidates
-
-    def generate_test_inputs(self, candidates: List[FandangoConstraintCandidate]) -> Set[Input]:
+    @abstractmethod
+    def generate_test_inputs(self, candidates: ExplanationSet) -> Set[Input]:
         """
         Generate the test inputs based on the learned candidates.
         :param candidates: The learned candidates.
@@ -191,23 +187,27 @@ class HypothesisBasedExplainer(InputExplainer, ABC):
         """
         raise NotImplementedError()
 
+    def negate_candidates(self, candidates: ExplanationSet) -> ExplanationSet:
+        """
+        Negate the learned candidates.
+        """
+        negated_candidates = self.constraint_negation.negate_explanations(candidates)
+        return negated_candidates
+
     def run_test_inputs(self, test_inputs: Set[Input]) -> Set[Input]:
         """
         Run the test inputs.
         """
-        LOGGER.info("Running the test inputs.")
+        LOGGER.debug("Running the test inputs.")
         return self.runner.label(test_inputs=test_inputs)
 
     def get_best_candidates(
-        self, strategy: Optional[FitnessStrategy] = None
-    ) -> Optional[List[FandangoConstraintCandidate]]:
+        self
+    ) -> ExplanationSet:
         """
         Return the best candidate.
         """
-        strategy = strategy if strategy else self.strategy
-        candidates = self.learner.get_best_candidates()
-        sorted_candidates = sorted(candidates, key=lambda c: strategy.evaluate(c), reverse=True) if candidates else []
-        return sorted_candidates
+        return self.learner.get_best_candidates()
 
     def get_test_inputs_from_strings(self, inputs: Iterable[str]) -> Set[Input]:
         """
