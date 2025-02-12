@@ -1,9 +1,8 @@
-from typing import List
 from queue import Queue
 from threading import Thread
 from multiprocessing import Process, Queue as ProcessQueue, Manager
 
-from dbg.explanation.candidate import ExplanationSet, Explanation
+from dbg.explanation.candidate import ExplanationSet
 from dbg.generator.generator import Generator
 
 
