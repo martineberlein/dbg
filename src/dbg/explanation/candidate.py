@@ -43,6 +43,10 @@ class Explanation(ABC):
     def __hash__(self):
         pass
 
+    @abstractmethod
+    def __len__(self):
+        return len(self.explanation)
+
 
 class ExplanationSet:
 
