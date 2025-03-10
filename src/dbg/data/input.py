@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Generator, Optional, Final
 from dbg.data.oracle import OracleResult
 
+
 class Input(ABC):
     """
     Represents a test input comprising a derivation tree and an associated oracle result.
