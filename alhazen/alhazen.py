@@ -11,5 +11,3 @@ class Alhazen(HypothesisBasedExplainer):
 
     def generate_test_inputs(self, candidates: ExplanationSet) -> Set[Input]:
         pass
-
-    
