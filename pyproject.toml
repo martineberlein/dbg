@@ -20,6 +20,7 @@ classifiers = [
     "Topic :: Software Development :: Testing"
 ]
 dependencies = [
+    "pandas"
 ]
 
 [project.optional-dependencies]
