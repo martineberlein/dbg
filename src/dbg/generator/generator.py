@@ -46,7 +46,7 @@ class Generator(ABC):
         """
         try:
             while True:
-                test_inputs = self.generate_test_inputs(candidate=candidate_queue.get_nowait())
+                test_inputs = self.generate_test_inputs(explanation=candidate_queue.get_nowait())
                 if isinstance(output_queue, Queue):
                     output_queue.put(test_inputs)
                 else:
@@ -60,26 +60,26 @@ class Generator(ABC):
         """
         pass
 
-
-class GrammarGenerator(Generator):
-    """
-    A simple grammar generator.
-    """
-
-    def __init__(self, grammar: AbstractGrammar, **kwargs):
-        super().__init__(grammar, **kwargs)
-
-    def generate(self, **kwargs) -> Input:
-        return Input(tree=self.grammar.fuzz())
-
-    def generate_test_inputs(self, candidate: Explanation=None, num_inputs: int = 5, time_out: int = 1, **kwargs) -> Set[Input]:
-        """
-        Generate multiple inputs to be used in the debugging process.
-        """
-        new_test_inputs: Set[Input] = set()
-        start_time = time.time()
-        while len(new_test_inputs) < num_inputs and time.time() - start_time < time_out:
-            new_input = self.generate(candidate=candidate, **kwargs)
-            new_test_inputs.add(new_input)
-
-        return new_test_inputs
+#
+# class GrammarGenerator(Generator):
+#     """
+#     A simple grammar generator.
+#     """
+#
+#     def __init__(self, grammar: AbstractGrammar, **kwargs):
+#         super().__init__(grammar, **kwargs)
+#
+#     def generate(self, **kwargs) -> Input:
+#         return Input(tree=self.grammar.fuzz())
+#
+#     def generate_test_inputs(self, candidate: Explanation=None, num_inputs: int = 5, time_out: int = 1, **kwargs) -> Set[Input]:
+#         """
+#         Generate multiple inputs to be used in the debugging process.
+#         """
+#         new_test_inputs: Set[Input] = set()
+#         start_time = time.time()
+#         while len(new_test_inputs) < num_inputs and time.time() - start_time < time_out:
+#             new_input = self.generate(candidate=candidate, **kwargs)
+#             new_test_inputs.add(new_input)
+#
+#         return new_test_inputs
