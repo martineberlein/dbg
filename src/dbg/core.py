@@ -22,7 +22,7 @@ class InputExplainer(ABC):
 
     def __init__(
         self,
-        grammar: AbstractGrammar,
+        grammar,
         oracle: OracleType,
         initial_inputs: Union[Iterable[str], Iterable[Input]],
         logger_level: LoggerLevel = LoggerLevel.INFO,
@@ -67,7 +67,7 @@ class HypothesisBasedExplainer(InputExplainer, ABC):
 
     def __init__(
         self,
-        grammar: AbstractGrammar,
+        grammar,
         oracle: OracleType,
         initial_inputs: Union[Iterable[str], Iterable[Input]],
         learner: Learner,
