@@ -1,10 +1,12 @@
 from typing import Optional
 
 from fuzzingbook.Parser import EarleyParser
+from fuzzingbook.GrammarFuzzer import tree_to_string, DerivationTree
+
 from dbg.data.input import Input, OracleResult
 
 from alhazen.features.features import FeatureVector
-from alhazen import tree_to_string, DerivationTree
+
 
 class AlhazenInput(Input):
 
@@ -31,3 +33,6 @@ class AlhazenInput(Input):
 
     def __repr__(self):
         return f"AlhazenInput({tree_to_string(self.tree)}, {self.oracle})"
+
+    def __str__(self):
+        return tree_to_string(self.tree)

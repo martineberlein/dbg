@@ -1,8 +1,5 @@
-from typing import Optional
-import re
 
-from dbg.data.input import Input
-from dbg.data.oracle import OracleResult
+import re
 
 Grammar = dict[str, list[str]]
 DerivationTree = tuple[str, list["DerivationTree"]]
@@ -32,15 +29,3 @@ def reachable_nonterminals(
 
     _find_reachable_nonterminals(grammar, start_symbol)
     return reachable
-
-
-def is_nonterminal(s):
-    return RE_NONTERMINAL.match(s)
-
-
-def tree_to_string(tree: DerivationTree) -> str:
-    symbol, children, *_ = tree
-    if children:
-        return ''.join(tree_to_string(c) for c in children)
-    else:
-        return '' if is_nonterminal(symbol) else symbol
