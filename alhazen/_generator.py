@@ -7,6 +7,8 @@ from dbg.generator.generator import Generator
 
 from alhazen import Grammar
 from alhazen._data import AlhazenInput
+from alhazen.features.features import Feature
+from alhazen.features.collector import GrammarFeatureCollector
 
 
 class AlhazenGenerator(Generator):
@@ -14,17 +16,39 @@ class AlhazenGenerator(Generator):
     def __init__(self, grammar: Grammar, **kwargs):
         super().__init__(grammar, **kwargs)
         self.fuzzer = GrammarFuzzer(grammar)
+        self.collector = GrammarFeatureCollector(grammar)
 
     def generate(self, explanation, *args, **kwargs):
-        return AlhazenInput(self.fuzzer.fuzz_tree())
+        val_inputs = []
+        for _ in range(10):
+            for _ in range(10):
+                val_inputs.append(AlhazenInput(self.fuzzer.fuzz_tree()))
+
+            for inp in val_inputs:
+                inp.features = self.collector.collect_features(inp)
+
+            for inp in val_inputs:
+                if all(prop.evaluate(inp) for prop in explanation):
+                    return inp
 
 
 class Property:
 
     def __init__(self, feature, operator, value):
-        self.feature = feature
+        assert isinstance(feature, Feature)
+
+        self.feature: Feature = feature
         self.operator = operator
         self.value = value
+
+    def evaluate(self, test_input: AlhazenInput):
+        input_value = test_input.features.get_feature_value(self.feature)
+        if self.operator == "<=":
+            return input_value <= self.value
+        elif self.operator == ">":
+            return input_value > self.value
+        else:
+            raise ValueError(f"Invalid operator: {self.operator}")
 
     def __str__(self):
         return f"{self.feature} {self.operator} {self.value}"
@@ -36,10 +60,10 @@ class Property:
 
 class HypothesisProducer:
 
-    def produce(self, explanations: ExplanationSet) -> list[list[Property]]:
+    def produce(self, explanations: ExplanationSet, all_features: list[Feature]) -> list[list[Property]]:
         positive = []
         for explanation in explanations:
-            positive_hypotheses = get_positive_paths(explanation.explanation, explanation.feature_names)
+            positive_hypotheses = get_positive_paths(explanation.explanation, all_features)
             positive.extend(positive_hypotheses)
 
         negated = []
@@ -48,6 +72,8 @@ class HypothesisProducer:
             negated.extend(negated_hypotheses)
 
         hypotheses = positive + negated
+        # for hypothesis in hypotheses:
+        #     print("hypothesis"," and ".join([str(prop) for prop in hypothesis]))
         return hypotheses
 
     @staticmethod
@@ -59,12 +85,12 @@ class HypothesisProducer:
         ]
         return negated_hypotheses
 
-def get_positive_paths(tree, feature_names=None, class_label=0, remove_redundant_split: bool=True):
+def get_positive_paths(tree, all_features: list[Feature], class_label=0, remove_redundant_split: bool=True):
     """Extracts paths leading to a positive prediction (class_label).
 
     Args:
         tree: Fitted DecisionTreeClassifier model.
-        feature_names: List of feature names.
+        all_features: List of feature names.
         class_label: The target class for which to extract paths.
         remove_redundant_split: Whether to remove redundant splits.
 
@@ -72,8 +98,7 @@ def get_positive_paths(tree, feature_names=None, class_label=0, remove_redundant
         A list of paths as readable conditions.
     """
     tree_ = tree.tree_
-    if feature_names is None:
-        feature_names = [f'feature_{i}' for i in range(tree_.n_features_in_)]
+    feature_names = [str(feature) for feature in all_features]
 
     def traverse(node, path):
         if tree_.feature[node] == -2:  # Leaf node
@@ -96,7 +121,7 @@ def get_positive_paths(tree, feature_names=None, class_label=0, remove_redundant
             return
 
         # Otherwise, continue traversing
-        feature = feature_names[tree_.feature[node]]
+        feature = all_features[tree_.feature[node]]
         threshold = tree_.threshold[node]
 
         traverse(left, path + [Property(feature, "<=", threshold)])
