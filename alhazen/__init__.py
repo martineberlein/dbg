@@ -47,7 +47,7 @@ def tree_to_if_then_statement(clf, feature_names: list[str], indent_: int = 0, r
     Returns:
         str: Readable if-else representation of the decision tree.
     """
-    class_names = [str(OracleResult.PASSING), str(OracleResult.FAILING)]
+    class_names = [str(OracleResult.FAILING), str(OracleResult.PASSING)]
 
     def _tree(index: int, indent: int) -> str:
         """Recursive function to traverse the decision tree and generate if-else statements."""

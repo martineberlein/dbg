@@ -39,7 +39,7 @@ class FeatureCollector(ABC):
         return factory.build(feature_types)
 
     @abstractmethod
-    def collect_features(self, test_input: Input) -> Dict[str, Any]:
+    def collect_features(self, test_input: Input) -> FeatureVector:
         pass
 
 

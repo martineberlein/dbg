@@ -12,5 +12,5 @@ class AlhazenGenerator(Generator):
         super().__init__(grammar, **kwargs)
         self.fuzzer = GrammarFuzzer(grammar)
 
-    def generate(self, *args, **kwargs):
+    def generate(self, explanation, *args, **kwargs):
         return AlhazenInput(self.fuzzer.fuzz_tree())

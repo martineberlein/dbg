@@ -142,6 +142,7 @@ class DecisionTreeLearner(SKLearnLearner):
             max_features=self.max_features,
             max_depth=self.max_depth,
             class_weight=class_weights,
+            random_state=1,
         )
 
         self.clf.fit(x_train, y_train)
