@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
+from dbg.data.input import Input
 
 class Explanation(ABC):
     """
@@ -11,27 +12,45 @@ class Explanation(ABC):
         self.explanation = explanation
         self.__hash = hash(str(self.explanation))
 
+        self.failing_inputs_eval_results = []
+        self.passing_inputs_eval_results = []
+        self.cache: dict[Input, bool] = {}
+
     @abstractmethod
     def evaluate(self, inputs):
         pass
 
-    @abstractmethod
-    def precision(self):
-        pass
+    def recall(self) -> float:
+        """
+        Return the recall of the candidate.
+        """
+        if len(self.failing_inputs_eval_results) == 0:
+            return 0.0
+        return sum(int(entry) for entry in self.failing_inputs_eval_results) / len(
+            self.failing_inputs_eval_results
+        )
 
-    @abstractmethod
-    def recall(self):
-        pass
+    def precision(self) -> float:
+        """
+        Return the precision of the candidate.
+        """
+        tp = sum(int(entry) for entry in self.failing_inputs_eval_results)
+        fp = sum(int(entry) for entry in self.passing_inputs_eval_results)
+        return tp / (tp + fp) if tp + fp > 0 else 0.0
 
-    @abstractmethod
-    def specificity(self):
-        pass
+    def specificity(self) -> float:
+        """
+        Return the specificity of the candidate.
+        """
+        if len(self.passing_inputs_eval_results) == 0:
+            return 0.0
+        return sum(not int(entry) for entry in self.passing_inputs_eval_results) / len(
+            self.passing_inputs_eval_results
+        )
 
-    @abstractmethod
     def __and__(self, other):
         pass
 
-    @abstractmethod
     def __or__(self, other):
         pass
 
@@ -39,13 +58,11 @@ class Explanation(ABC):
     def __neg__(self, other):
         pass
 
-    @abstractmethod
     def __hash__(self):
-        pass
+        return self.__hash
 
-    @abstractmethod
     def __len__(self):
-        return len(self.explanation)
+        return len(str(self.explanation))
 
 
 class ExplanationSet:
