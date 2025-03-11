@@ -20,11 +20,11 @@ class Alhazen(HypothesisBasedExplainer):
     """
 
     def __init__(
-            self,
-            grammar: Grammar,
-            oracle: OracleType,
-            initial_inputs: Iterable[str],
-            **kwargs,
+        self,
+        grammar: Grammar,
+        oracle: OracleType,
+        initial_inputs: Iterable[str],
+        **kwargs,
     ):
         """
         Initializes the Alhazen explainer.
