@@ -36,8 +36,8 @@ class SingleEngine(Engine):
         :return:
         """
         new_test_inputs = set()
-        for candidate in explanations:
-            new_test_inputs.update(self.generator.generate_test_inputs(candidate=candidate))
+        for explanation in explanations:
+            new_test_inputs.update(self.generator.generate_test_inputs(explanation=explanation))
         return new_test_inputs
 
 
