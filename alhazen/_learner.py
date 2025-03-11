@@ -1,6 +1,5 @@
 from typing import Iterable, Optional
-from abc import ABC, abstractmethod
-import math
+from abc import ABC
 
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
@@ -10,17 +9,23 @@ from dbg.learner.learner import Learner
 from dbg.data.oracle import OracleResult
 
 from alhazen._data import AlhazenInput
+from alhazen import tree_to_if_then_statement
 
 
 class AlhazenExplanation(Explanation):
+    """
+    AlhazenExplanation is a concrete implementation of an explanation
+    based on a DecisionTreeClassifier.
+    """
 
-    def __init__(self, explanation: DecisionTreeClassifier):
+    def __init__(self, explanation: DecisionTreeClassifier, feature_names: list[str]):
         super().__init__(explanation)
-        self.failing_inputs_eval_results = []
-        self.passing_inputs_eval_results = []
-        self.cache: dict[AlhazenInput, bool] = {}
+        self.feature_names = feature_names
 
-    def evaluate(self, inputs):
+    def evaluate(self, inputs: set[AlhazenInput]):
+        """
+        Evaluates the explanation on a set of inputs.
+        """
         for inp in inputs:
             if inp in self.cache.keys():
                 continue
@@ -37,27 +42,23 @@ class AlhazenExplanation(Explanation):
     def __neg__(self):
         return self
 
+    def __str__(self):
+        return self.tree_to_explanation()
+
+    def tree_to_explanation(self):
+        return tree_to_if_then_statement(self.explanation, self.feature_names)
+
 
 class AlhazenLearner(Learner):
-
-    def get_best_candidates(self) -> Optional[ExplanationSet]:
-        pass
-
-    def get_explanations(self) -> Optional[ExplanationSet]:
-        pass
 
     def learn_explanation(
         self, test_inputs: set[AlhazenInput], **kwargs
     ) -> Optional[ExplanationSet]:
         sk_learner = DecisionTreeLearner()
         diagnosis = sk_learner.train(test_inputs)
-        sk_learner.print_decision_tree(diagnosis)
-        explanation = AlhazenExplanation(diagnosis)
-        explanation.evaluate(test_inputs)
-        print(
-            f"Explanation achieved: {explanation.precision()} Precision, {explanation.recall()} Recall"
-        )
-        return ExplanationSet([explanation])
+        explanation = AlhazenExplanation(diagnosis, sk_learner.data.columns)
+        self.explanations = ExplanationSet([explanation])
+        return self.explanations
 
 
 class SKLearnLearner(ABC):
@@ -90,7 +91,7 @@ class SKLearnLearner(ABC):
 
 
 class DecisionTreeLearner(SKLearnLearner):
-    """Decision tree learner using scikit-learn's DecisionTreeClassifier."""
+    """Decision tree learner using scikit-learns DecisionTreeClassifier."""
 
     def __init__(
         self,
@@ -116,9 +117,6 @@ class DecisionTreeLearner(SKLearnLearner):
             1 for x in test_inputs if x.oracle == OracleResult.FAILING
         )
         sample_count = len(data)
-
-        # if sample_bug_count == 0 or sample_count - sample_bug_count == 0:
-        #     return None  # Avoid division by zero if data is imbalanced
 
         return {
             str(OracleResult.FAILING): 1.0 / sample_bug_count,
@@ -148,42 +146,3 @@ class DecisionTreeLearner(SKLearnLearner):
 
         self.clf.fit(x_train, y_train)
         return self.clf
-
-    def print_decision_tree(self, tree: DecisionTreeClassifier = None):
-        if tree is None:
-            tree = self.clf
-        print(self._friendly_decision_tree(tree, self.data.columns))
-
-    @staticmethod
-    def _friendly_decision_tree(clf, feature_names, class_names=None, indent=0):
-        if class_names is None:
-            class_names = [str(OracleResult.PASSING), str(OracleResult.FAILING)]
-
-        def _tree(index, indent):
-            s = ""
-            feature = clf.tree_.feature[index]
-            feature_name = feature_names[feature]
-            threshold = clf.tree_.threshold[index]
-            value = clf.tree_.value[index]
-            class_ = int(value[0][0])
-            class_name = class_names[class_]
-            left = clf.tree_.children_left[index]
-            right = clf.tree_.children_right[index]
-            if left == right:
-                # Leaf node
-                s += " " * indent + class_name + "\n"
-            else:
-                if math.isclose(threshold, 0.5):
-                    s += " " * indent + f"if {feature_name}:\n"
-                    s += _tree(right, indent + 2)
-                    s += " " * indent + f"else:\n"
-                    s += _tree(left, indent + 2)
-                else:
-                    s += " " * indent + f"if {feature_name} <= {threshold:.4f}:\n"
-                    s += _tree(left, indent + 2)
-                    s += " " * indent + f"else:\n"
-                    s += _tree(right, indent + 2)
-            return s
-
-        ROOT_INDEX = 0
-        return _tree(ROOT_INDEX, indent)
