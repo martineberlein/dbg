@@ -4,13 +4,10 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 import numpy as np
 
-from alhazen import DerivationTree
+from fuzzingbook.GrammarFuzzer import tree_to_string
+
+from alhazen import DerivationTree, Grammar, reachable_nonterminals
 from dbg.data.oracle import OracleResult
-from alhazen import (
-    is_nonterminal,
-    Grammar,
-    reachable_nonterminals,
-)
 
 
 class Feature(ABC):
@@ -274,11 +271,3 @@ class FeatureVector:
 
     def __repr__(self):
         return f"{self.test_input}: {self.features}"
-
-
-def tree_to_string(tree: DerivationTree) -> str:
-    symbol, children, *_ = tree
-    if children:
-        return "".join(tree_to_string(c) for c in children)
-    else:
-        return "" if is_nonterminal(symbol) else symbol

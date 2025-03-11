@@ -2,7 +2,9 @@ from functools import lru_cache
 from typing import List, Dict, Optional, Any, Type
 from abc import ABC, abstractmethod
 
-from alhazen import is_nonterminal, Grammar, DerivationTree
+from fuzzingbook.GrammarFuzzer import is_nonterminal
+
+from alhazen import Grammar, DerivationTree
 
 from alhazen.features.features import (
     ExistenceFeature,
