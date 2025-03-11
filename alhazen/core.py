@@ -83,7 +83,8 @@ class Alhazen(HypothesisBasedExplainer):
             ExplanationSet: The learned decision tree
         """
         LOGGER.info("Learning candidates.")
-        return self.learner.learn_explanation(test_inputs)
+        explanations = self.learner.learn_explanation(test_inputs)
+        return explanations
 
     def generate_test_inputs(self, explanations: ExplanationSet) -> Set[AlhazenInput]:
         """

@@ -39,4 +39,7 @@ if __name__ == "__main__":
         max_iterations=20,
     )
 
-    diagnosis = alhazen.explain()
+    explanations = alhazen.explain()
+
+    for explanation in explanations:
+        print(explanation)
