@@ -35,13 +35,13 @@ class Input(ABC):
         """Sets the oracle result for the input."""
         self._oracle = oracle_
 
-    @abstractmethod
-    def traverse(self):
-        """
-        Abstract method for traversing the derivation tree.
-        Must be implemented by subclasses.
-        """
-        raise NotImplementedError()
+    # @abstractmethod
+    # def traverse(self):
+    #     """
+    #     Abstract method for traversing the derivation tree.
+    #     Must be implemented by subclasses.
+    #     """
+    #     raise NotImplementedError()
 
     @abstractmethod
     def __hash__(self) -> int:
