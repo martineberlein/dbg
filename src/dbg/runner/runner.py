@@ -19,7 +19,7 @@ class ExecutionHandler(ABC):
 
 
 class SingleExecutionHandler(ExecutionHandler):
-    def _get_label(self, test_input: Union[Input]) -> OracleResult:
+    def _get_label(self, test_input: Input) -> OracleResult:
         return self.oracle(test_input)
 
     def label(self, test_inputs: Set[Input], **kwargs):
