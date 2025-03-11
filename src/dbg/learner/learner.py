@@ -25,7 +25,6 @@ class Learner(ABC):
         """
         raise NotImplementedError()
 
-    @abstractmethod
     def get_explanations(self) -> Optional[ExplanationSet]:
         """
         Get all explanations that have been learned.
@@ -33,7 +32,6 @@ class Learner(ABC):
         """
         return self.explanations
 
-    @abstractmethod
     def get_best_candidates(self) -> Optional[ExplanationSet]:
         """
         Get the best constraints that have been learned.
