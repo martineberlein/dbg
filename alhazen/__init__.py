@@ -34,7 +34,7 @@ def reachable_nonterminals(
     return reachable
 
 
-def tree_to_if_then_statement(clf, feature_names: list[str], indent_: int = 0) -> str:
+def tree_to_if_then_statement(clf, feature_names: list[str], indent_: int = 0, remove_redundant_split=True) -> str:
     """
     Transforms a sklearn DecisionTreeClassifier into a readable if-else statement.
 
@@ -42,7 +42,8 @@ def tree_to_if_then_statement(clf, feature_names: list[str], indent_: int = 0) -
         clf (DecisionTreeClassifier): The trained decision tree classifier.
         feature_names (List[str]): List of feature names corresponding to tree features.
         indent_ (int, optional): The starting indentation level. Defaults to 0.
-
+        remove_redundant_split (bool, optional): Remove redundant splits where both children have the same prediction.
+            Defaults to False.
     Returns:
         str: Readable if-else representation of the decision tree.
     """
@@ -55,12 +56,18 @@ def tree_to_if_then_statement(clf, feature_names: list[str], indent_: int = 0) -
 
         # Leaf node check
         if feature == -2:
-            class_ = int(tree.value[index][0][0])
+            class_ = int(tree.value[index][0].argmax())
             return " " * indent + class_names[class_] + "\n"
 
-        feature_name = feature_names[feature]
-        threshold = tree.threshold[index]
         left, right = tree.children_left[index], tree.children_right[index]
+        threshold = tree.threshold[index]
+        feature_name = feature_names[feature]
+        left_prediction = int(tree.value[left][0].argmax())
+        right_prediction = int(tree.value[right][0].argmax())
+
+        # Remove redundant splits where both children have the same prediction
+        if remove_redundant_split and left_prediction == right_prediction:
+            return " " * indent + class_names[left_prediction] + "\n"
 
         s = " " * indent
         if math.isclose(threshold, 0.5):
