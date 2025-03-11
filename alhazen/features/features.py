@@ -15,9 +15,7 @@ class Feature(ABC):
         self.non_terminal = non_terminal
 
     def __repr__(self) -> str:
-        return (
-            self._repr()
-        )
+        return self._repr()
 
     @abstractmethod
     def _repr(self) -> str:

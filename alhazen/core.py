@@ -14,18 +14,26 @@ from alhazen.features.collector import GrammarFeatureCollector
 
 class Alhazen(HypothesisBasedExplainer):
 
-    def __init__(self, grammar: Grammar, oracle: OracleType,
-                 initial_inputs: Iterable[str],
-                 **kwargs):
+    def __init__(
+        self,
+        grammar: Grammar,
+        oracle: OracleType,
+        initial_inputs: Iterable[str],
+        **kwargs,
+    ):
 
         learner = AlhazenLearner()
         generator = AlhazenGenerator(grammar)
+
         super().__init__(grammar, oracle, initial_inputs, learner, generator, **kwargs)
 
         self.collector = GrammarFeatureCollector(grammar)
 
     def set_initial_inputs(self, test_inputs: Iterable[str]) -> set[AlhazenInput]:
-        return {AlhazenInput.from_str(self.grammar, inp, self.oracle(inp)) for inp in test_inputs}
+        return {
+            AlhazenInput.from_str(self.grammar, inp, self.oracle(inp))
+            for inp in test_inputs
+        }
 
     def prepare_test_inputs(self, test_inputs: set[AlhazenInput]) -> Set[AlhazenInput]:
         for inp in test_inputs:

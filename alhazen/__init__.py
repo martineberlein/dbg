@@ -1,4 +1,3 @@
-
 import re
 
 Grammar = dict[str, list[str]]

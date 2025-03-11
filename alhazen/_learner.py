@@ -24,7 +24,9 @@ class AlhazenExplanation(Explanation):
         for inp in inputs:
             if inp in self.cache.keys():
                 continue
-            eval_result = self.explanation.predict(pd.DataFrame.from_records([{**inp.features.features}]))[0]
+            eval_result = self.explanation.predict(
+                pd.DataFrame.from_records([{**inp.features.features}])
+            )[0]
             eval_result = True if eval_result == str(OracleResult.FAILING) else False
             if inp.oracle == OracleResult.FAILING:
                 self.failing_inputs_eval_results.append(eval_result)
@@ -44,13 +46,17 @@ class AlhazenLearner(Learner):
     def get_explanations(self) -> Optional[ExplanationSet]:
         pass
 
-    def learn_explanation(self, test_inputs: set[AlhazenInput], **kwargs) -> Optional[ExplanationSet]:
+    def learn_explanation(
+        self, test_inputs: set[AlhazenInput], **kwargs
+    ) -> Optional[ExplanationSet]:
         sk_learner = DecisionTreeLearner()
         diagnosis = sk_learner.train(test_inputs)
         sk_learner.print_decision_tree(diagnosis)
         explanation = AlhazenExplanation(diagnosis)
         explanation.evaluate(test_inputs)
-        print(f"Explanation achieved: {explanation.precision()} Precision, {explanation.recall()} Recall")
+        print(
+            f"Explanation achieved: {explanation.precision()} Precision, {explanation.recall()} Recall"
+        )
         return ExplanationSet([explanation])
 
 
@@ -74,7 +80,11 @@ class SKLearnLearner(ABC):
 
         if data_records:
             new_data = pd.DataFrame.from_records(data_records)
-            self.data = pd.concat([self.data, new_data], sort=False) if not self.data.empty else new_data
+            self.data = (
+                pd.concat([self.data, new_data], sort=False)
+                if not self.data.empty
+                else new_data
+            )
 
         return self.data
 
@@ -98,9 +108,13 @@ class DecisionTreeLearner(SKLearnLearner):
         self.clf: Optional[DecisionTreeClassifier] = None
 
     @staticmethod
-    def _compute_class_weights(data: pd.DataFrame, test_inputs: set[AlhazenInput]) -> dict:
+    def _compute_class_weights(
+        data: pd.DataFrame, test_inputs: set[AlhazenInput]
+    ) -> dict:
         """Computes class weights based on the distribution of failing and passing samples."""
-        sample_bug_count = sum(1 for x in test_inputs if x.oracle == OracleResult.FAILING)
+        sample_bug_count = sum(
+            1 for x in test_inputs if x.oracle == OracleResult.FAILING
+        )
         sample_count = len(data)
 
         # if sample_bug_count == 0 or sample_count - sample_bug_count == 0:
@@ -135,17 +149,16 @@ class DecisionTreeLearner(SKLearnLearner):
         self.clf.fit(x_train, y_train)
         return self.clf
 
-    def print_decision_tree(self, tree: DecisionTreeClassifier=None):
+    def print_decision_tree(self, tree: DecisionTreeClassifier = None):
         if tree is None:
             tree = self.clf
         print(self._friendly_decision_tree(tree, self.data.columns))
 
     @staticmethod
-    def _friendly_decision_tree(clf, feature_names,
-                               class_names=None,
-                               indent=0):
+    def _friendly_decision_tree(clf, feature_names, class_names=None, indent=0):
         if class_names is None:
             class_names = [str(OracleResult.PASSING), str(OracleResult.FAILING)]
+
         def _tree(index, indent):
             s = ""
             feature = clf.tree_.feature[index]

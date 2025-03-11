@@ -8,7 +8,10 @@ if __name__ == "__main__":
 
     def oracle(inp: AlhazenInput | str) -> OracleResult:
         try:
-            eval(str(inp), {"sqrt": math.sqrt, "sin": math.sin, "cos": math.cos, "tan": math.tan})
+            eval(
+                str(inp),
+                {"sqrt": math.sqrt, "sin": math.sin, "cos": math.cos, "tan": math.tan},
+            )
             return OracleResult.PASSING
         except ValueError:
             return OracleResult.FAILING
