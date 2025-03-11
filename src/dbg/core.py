@@ -174,8 +174,8 @@ class HypothesisBasedExplainer(InputExplainer, ABC):
         """
         test_inputs = self.prepare_test_inputs(test_inputs)
         candidates = self.learn_candidates(test_inputs)
-        negated_candidates = self.negate_candidates(candidates)
-        inputs = self.generate_test_inputs(candidates + negated_candidates)
+        hypotheses = self.create_hypotheses(candidates)
+        inputs = self.generate_test_inputs(hypotheses)
         labeled_test_inputs = self.run_test_inputs(inputs)
         return labeled_test_inputs
 
@@ -205,12 +205,13 @@ class HypothesisBasedExplainer(InputExplainer, ABC):
         """
         raise NotImplementedError()
 
-    def negate_candidates(self, candidates: ExplanationSet) -> list[Explanation]:
+    def create_hypotheses(self, candidates: ExplanationSet) -> ExplanationSet:
         """
-        Negate the learned candidates.
+        Create new hypotheses by negating the learned candidates.
         """
         negated_candidates = self.constraint_negation.negate_explanations(candidates)
-        return negated_candidates
+        hypotheses = negated_candidates + candidates
+        return hypotheses
 
     def run_test_inputs(self, test_inputs: Set[Input]) -> Set[Input]:
         """
