@@ -32,9 +32,25 @@ class InputExplainer(ABC):
         """
         LOGGER.setLevel(logger_level.value)
 
-        self.initial_inputs = initial_inputs
         self.grammar = grammar
         self.oracle = oracle
+        self.initial_inputs: set[Input] = self.set_initial_inputs(initial_inputs)
+
+    def set_initial_inputs(self, test_inputs: Union[Iterable[str], Iterable[Input]]) -> set[Input]:
+        """
+        Set the initial inputs for the input feature debugger.
+        """
+        if test_inputs is None:
+            raise ValueError("The initial inputs cannot be None.")
+
+        initial_inputs = set()
+        for inp in initial_inputs:
+            if isinstance(inp, str):
+                initial_inputs.add(Input.from_str(self.grammar, inp))
+            elif isinstance(inp, Input):
+                initial_inputs.add(inp)
+
+        return initial_inputs
 
     @abstractmethod
     def explain(self, *args, **kwargs) -> ExplanationSet:
@@ -137,7 +153,7 @@ class HypothesisBasedExplainer(InputExplainer, ABC):
         start_time = self.set_timeout()
         LOGGER.info("Starting the hypothesis-based input feature debugger.")
         try:
-            test_inputs: Set[Input] = self.prepare_test_inputs()
+            test_inputs: Set[Input] = self.initial_inputs
 
             while self.check_iteration_limits(iteration, start_time):
                 LOGGER.info(f"Starting iteration {iteration}.")
@@ -152,24 +168,26 @@ class HypothesisBasedExplainer(InputExplainer, ABC):
         finally:
             return self.get_best_candidates()
 
-    def prepare_test_inputs(self) -> Set[Input]:
-        """
-        Prepare the input feature debugger.
-        """
-        test_inputs: Set[Input] = self.get_test_inputs_from_strings(self.initial_inputs)
-        test_inputs = self.run_test_inputs(test_inputs)
-        self.check_initial_conditions(test_inputs)
-        return test_inputs
-
     def hypothesis_loop(self, test_inputs: Set[Input]) -> Set[Input]:
         """
         The main loop of the hypothesis-based input feature debugger.
         """
+        test_inputs = self.prepare_test_inputs(test_inputs)
         candidates = self.learn_candidates(test_inputs)
         negated_candidates = self.negate_candidates(candidates)
         inputs = self.generate_test_inputs(candidates + negated_candidates)
         labeled_test_inputs = self.run_test_inputs(inputs)
         return labeled_test_inputs
+
+    @abstractmethod
+    def prepare_test_inputs(self, test_inputs) -> Set[Input]:
+        """
+        Prepare the input feature debugger.
+        """
+        test_inputs: Set[Input] = self.get_test_inputs_from_strings(test_inputs)
+        test_inputs = self.run_test_inputs(test_inputs)
+        # self.check_initial_conditions(test_inputs)
+        return test_inputs
 
     @abstractmethod
     def learn_candidates(self, test_inputs: Set[Input]) -> ExplanationSet:
