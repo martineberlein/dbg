@@ -60,10 +60,14 @@ class Property:
 
 class HypothesisProducer:
 
-    def produce(self, explanations: ExplanationSet, all_features: list[Feature]) -> list[list[Property]]:
+    def produce(
+        self, explanations: ExplanationSet, all_features: list[Feature]
+    ) -> list[list[Property]]:
         positive = []
         for explanation in explanations:
-            positive_hypotheses = get_positive_paths(explanation.explanation, all_features)
+            positive_hypotheses = get_positive_paths(
+                explanation.explanation, all_features
+            )
             positive.extend(positive_hypotheses)
 
         negated = []
@@ -85,7 +89,13 @@ class HypothesisProducer:
         ]
         return negated_hypotheses
 
-def get_positive_paths(tree, all_features: list[Feature], class_label=0, remove_redundant_split: bool=True):
+
+def get_positive_paths(
+    tree,
+    all_features: list[Feature],
+    class_label=0,
+    remove_redundant_split: bool = True,
+):
     """Extracts paths leading to a positive prediction (class_label).
 
     Args:

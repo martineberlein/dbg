@@ -34,7 +34,9 @@ def reachable_nonterminals(
     return reachable
 
 
-def tree_to_if_then_statement(clf, feature_names: list[str], indent_: int = 0, remove_redundant_split=True) -> str:
+def tree_to_if_then_statement(
+    clf, feature_names: list[str], indent_: int = 0, remove_redundant_split=True
+) -> str:
     """
     Transforms a sklearn DecisionTreeClassifier into a readable if-else statement.
 

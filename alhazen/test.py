@@ -63,8 +63,8 @@ if __name__ == "__main__":
     for explanation in explanations:
         explanation.evaluate(verification_inputs)
         print(explanation)
-        print(f"Explanation achieved: {explanation.precision()} precision, {explanation.recall()} recall")
+        print(
+            f"Explanation achieved: {explanation.precision()} precision, {explanation.recall()} recall"
+        )
         # for inp in verification_inputs:
         #     print(f"Input: {inp}, Prediction: {explanation.cache[inp]}")
-
-
