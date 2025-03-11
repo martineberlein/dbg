@@ -1,8 +1,10 @@
 from alhazen.core import Alhazen
 from alhazen._data import AlhazenInput, OracleResult
 
+import random
 
 if __name__ == "__main__":
+    random.seed(1)
     from fuzzingbook.GrammarFuzzer import is_valid_grammar
     import math
 
@@ -43,3 +45,26 @@ if __name__ == "__main__":
 
     for explanation in explanations:
         print(explanation)
+
+    from fuzzingbook.GrammarFuzzer import GrammarFuzzer
+    from alhazen._data import AlhazenInput
+    from alhazen.features.collector import GrammarFeatureCollector
+
+    fuzzer = GrammarFuzzer(grammar_alhazen)
+    collector = GrammarFeatureCollector(grammar_alhazen)
+
+    verification_inputs = set()
+    for _ in range(100):
+        inp = fuzzer.fuzz()
+        parsed_input = AlhazenInput.from_str(grammar_alhazen, inp, oracle(inp))
+        parsed_input.features = collector.collect_features(parsed_input)
+        verification_inputs.add(parsed_input)
+
+    for explanation in explanations:
+        explanation.evaluate(verification_inputs)
+        print(explanation)
+        print(f"Explanation achieved: {explanation.precision()} precision, {explanation.recall()} recall")
+        # for inp in verification_inputs:
+        #     print(f"Input: {inp}, Prediction: {explanation.cache[inp]}")
+
+
