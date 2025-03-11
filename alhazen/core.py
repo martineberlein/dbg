@@ -1,5 +1,4 @@
 from typing import Set, Iterable, Any
-import numpy as np
 
 from dbg.core import HypothesisBasedExplainer
 from dbg.explanation.candidate import ExplanationSet
@@ -106,4 +105,4 @@ class Alhazen(HypothesisBasedExplainer):
         """
         Creates new hypotheses based on the learned decision tree.
         """
-        return self.hypothesis_producer.produce(explanations)
+        return self.hypothesis_producer.produce(explanations, self.collector.features)
