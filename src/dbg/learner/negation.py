@@ -9,7 +9,7 @@ class ExplanationNegation(ABC):
         pass
 
     @abstractmethod
-    def negate_explanations(self, explanations: ExplanationSet) -> list[Explanation]:
+    def negate_explanations(self, explanations: ExplanationSet) -> ExplanationSet:
         pass
 
 class DefaultExplanationNegation(ExplanationNegation):
