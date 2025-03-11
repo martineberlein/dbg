@@ -55,7 +55,7 @@ class Explanation(ABC):
         pass
 
     @abstractmethod
-    def __neg__(self, other):
+    def __neg__(self):
         pass
 
     def __hash__(self):
