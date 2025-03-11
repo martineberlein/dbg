@@ -5,11 +5,35 @@ import math
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
 
-from dbg.explanation.candidate import ExplanationSet
+from dbg.explanation.candidate import ExplanationSet, Explanation
 from dbg.learner.learner import Learner
 from dbg.data.oracle import OracleResult
 
 from alhazen._data import AlhazenInput
+
+
+class AlhazenExplanation(Explanation):
+
+    def __init__(self, explanation: DecisionTreeClassifier):
+        super().__init__(explanation)
+        self.failing_inputs_eval_results = []
+        self.passing_inputs_eval_results = []
+        self.cache: dict[AlhazenInput, bool] = {}
+
+    def evaluate(self, inputs):
+        for inp in inputs:
+            if inp in self.cache.keys():
+                continue
+            eval_result = self.explanation.predict(pd.DataFrame.from_records([{**inp.features.features}]))[0]
+            eval_result = True if eval_result == str(OracleResult.FAILING) else False
+            if inp.oracle == OracleResult.FAILING:
+                self.failing_inputs_eval_results.append(eval_result)
+            else:
+                self.passing_inputs_eval_results.append(eval_result)
+            self.cache[inp] = eval_result
+
+    def __neg__(self):
+        return self
 
 
 class AlhazenLearner(Learner):
@@ -22,9 +46,12 @@ class AlhazenLearner(Learner):
 
     def learn_explanation(self, test_inputs: set[AlhazenInput], **kwargs) -> Optional[ExplanationSet]:
         sk_learner = DecisionTreeLearner()
-        dia = sk_learner.train(test_inputs)
-        sk_learner.print_decision_tree(dia)
-        pass
+        diagnosis = sk_learner.train(test_inputs)
+        sk_learner.print_decision_tree(diagnosis)
+        explanation = AlhazenExplanation(diagnosis)
+        explanation.evaluate(test_inputs)
+        print(f"Explanation achieved: {explanation.precision()} Precision, {explanation.recall()} Recall")
+        return ExplanationSet([explanation])
 
 
 class SKLearnLearner(ABC):
@@ -76,8 +103,8 @@ class DecisionTreeLearner(SKLearnLearner):
         sample_bug_count = sum(1 for x in test_inputs if x.oracle == OracleResult.FAILING)
         sample_count = len(data)
 
-        if sample_bug_count == 0 or sample_count - sample_bug_count == 0:
-            return None  # Avoid division by zero if data is imbalanced
+        # if sample_bug_count == 0 or sample_count - sample_bug_count == 0:
+        #     return None  # Avoid division by zero if data is imbalanced
 
         return {
             str(OracleResult.FAILING): 1.0 / sample_bug_count,
