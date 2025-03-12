@@ -76,8 +76,6 @@ class HypothesisProducer:
             negated.extend(negated_hypotheses)
 
         hypotheses = positive + negated
-        # for hypothesis in hypotheses:
-        #     print("hypothesis"," and ".join([str(prop) for prop in hypothesis]))
         return hypotheses
 
     @staticmethod
