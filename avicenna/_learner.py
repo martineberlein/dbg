@@ -9,6 +9,7 @@ from isla.evaluator import evaluate
 from grammar_graph import gg
 
 from avicenna._data import AvicennaInput
+from avicenna._learning._islearn import OptimizedISLearnLearner
 
 
 class AvicennaExplanation(Explanation):

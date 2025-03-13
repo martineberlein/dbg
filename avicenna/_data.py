@@ -39,3 +39,6 @@ class AvicennaInput(Input):
             ),
             oracle,
         )
+
+
+__all__ = ["AvicennaInput"]
