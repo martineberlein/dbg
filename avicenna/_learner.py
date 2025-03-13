@@ -4,6 +4,7 @@ from dbg.data.input import Input
 from dbg.explanation.candidate import Explanation, ExplanationSet
 from dbg.learner.learner import Learner
 from dbg.data.oracle import OracleResult
+from dbg.learner.metric import RecallPriorityLengthFitness
 
 from isla.evaluator import evaluate
 from isla.language import ISLaUnparser
@@ -77,12 +78,7 @@ class AvicennaExplanation(Explanation):
         """
         Return the disjunction of the candidate formula with another candidate formula.
         """
-        new_cache = {inp: result or other.cache[inp] for inp, result in self.cache.items()}
-        failing = [eval_result or other.cache[inp] for inp, eval_result in self.failing_inputs_eval_results]
-        passing = [eval_result or other.cache[inp] for inp, eval_result in self.passing_inputs_eval_results]
-
-        disjunction = self.explanation | other.explanation
-        return self.__new_explanation(disjunction, failing, passing, new_cache)
+        pass
 
     @staticmethod
     def __new_explanation(explanation, failing_inputs_eval_results, passing_inputs_eval_results, cache):
@@ -93,6 +89,20 @@ class AvicennaExplanation(Explanation):
 
     def __str__(self):
         return ISLaUnparser(self.explanation).unparse()
+
+    def __lt__(self, other):
+        """
+        Return whether a candidate is less than another candidate based on a fitness strategy.
+        """
+        strategy = RecallPriorityLengthFitness()
+        return strategy.compare(self, other) < 0
+
+    def __gt__(self, other):
+        """
+        Return whether a candidate is greater than another candidate based on a fitness strategy.
+        """
+        strategy = RecallPriorityLengthFitness()
+        return strategy.compare(self, other) > 0
 
 
 class AvicennaLearner(Learner):

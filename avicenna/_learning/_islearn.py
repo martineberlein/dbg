@@ -103,10 +103,6 @@ class OptimizedISLearnLearner(
             explanations_to_evaluate, positive_inputs, negative_inputs
         )
 
-        for explanation in self.explanations:
-            print(
-                explanation, explanation.recall(), explanation.specificity()
-            )
         conjunction_candidates = self.get_conjunctions(self.explanations)
         for candidate in conjunction_candidates:
             self.explanations.append(candidate)
