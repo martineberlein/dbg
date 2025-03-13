@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generator, Optional, Final
+from typing import Generator, Optional, Final, Any
 from dbg.data.oracle import OracleResult
 
 
@@ -17,31 +17,55 @@ class Input(ABC):
         :param tree: The derivation tree of the input.
         :param OracleResult oracle: The optional oracle result associated with the input.
         """
-        self._tree: Final = tree  # Store the tree but don't enforce a specific type
-        self._oracle: Optional[OracleResult] = oracle
+        self.__tree: Final = tree
+        self.__oracle: Optional[OracleResult] = oracle
 
     @property
-    def tree(self):
-        """Retrieves the derivation tree of the input."""
-        return self._tree
+    def tree(self) -> Any:
+        """
+        Retrieves the derivation tree of the input.
+        :return DerivationTree: The derivation tree.
+        """
+        return self.__tree
 
     @property
-    def oracle(self) -> Optional[OracleResult]:
-        """Retrieves the oracle result associated with the input."""
-        return self._oracle
+    def oracle(self) -> OracleResult:
+        """
+        Retrieves the oracle result associated with the input.
+        :return OracleResult: The oracle result, or None if not set.
+        """
+        return self.__oracle
 
     @oracle.setter
     def oracle(self, oracle_: OracleResult):
-        """Sets the oracle result for the input."""
-        self._oracle = oracle_
+        """
+        Sets the oracle result for the input.
+        :param OracleResult oracle_: The new oracle result to set.
+        """
+        self.__oracle = oracle_
 
-    # @abstractmethod
-    # def traverse(self):
-    #     """
-    #     Abstract method for traversing the derivation tree.
-    #     Must be implemented by subclasses.
-    #     """
-    #     raise NotImplementedError()
+    def update_oracle(self, oracle_: OracleResult) -> "Input":
+        """
+        Updates the oracle result for the input and returns the modified input instance.
+        :param OracleResult oracle_: The new oracle result to set.
+        :return Input: The current input instance with the updated oracle.
+        """
+        self.__oracle = oracle_
+        return self
+
+    def __repr__(self) -> str:
+        """
+        Provides the canonical string representation of the Input instance.
+        :return str: A string representation that can recreate the Input instance.
+        """
+        return f"Input({repr(self.tree)}, {repr(self.oracle)})"
+
+    def __str__(self) -> str:
+        """
+        Provides a user-friendly string representation of the Input's derivation tree.
+        :return str: The string representation of the derivation tree.
+        """
+        return str(self.__tree)
 
     @abstractmethod
     def __hash__(self) -> int:
@@ -51,6 +75,8 @@ class Input(ABC):
     def __eq__(self, other) -> bool:
         """
         Determines equality based on the structural hash of the derivation trees.
+        :param other: The object to compare against.
+        :return bool: True if the other object is an Input with an equal derivation tree.
         """
         return isinstance(other, Input) and self.__hash__() == hash(other)
 
