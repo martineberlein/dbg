@@ -2,10 +2,8 @@ from functools import lru_cache
 from typing import List, Dict, Optional, Any, Type
 from abc import ABC, abstractmethod
 
-from debugging_framework.fuzzingbook.grammar import is_nonterminal, Grammar
-from isla.language import DerivationTree
-
-from ..data.input_data import Input
+from avicenna import is_nonterminal, Grammar, DerivationTree
+from avicenna._data import AvicennaInput
 from .features import (
     ExistenceFeature,
     DerivationFeature,
@@ -37,12 +35,12 @@ class FeatureCollector(ABC):
         return factory.build(feature_types)
 
     @abstractmethod
-    def collect_features(self, test_input: Input) -> Dict[str, Any]:
+    def collect_features(self, test_input: AvicennaInput) -> Dict[str, Any]:
         pass
 
 
 class GrammarFeatureCollector(FeatureCollector):
-    def collect_features(self, test_input: Input) -> FeatureVector:
+    def collect_features(self, test_input: AvicennaInput) -> FeatureVector:
         feature_vector = FeatureVector(str(test_input))
 
         for feature in self.features:

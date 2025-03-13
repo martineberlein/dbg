@@ -3,13 +3,8 @@ import re
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
-from isla.language import DerivationTree
-from debugging_framework.input.oracle import OracleResult
-from debugging_framework.fuzzingbook.grammar import (
-    is_nonterminal,
-    Grammar,
-    reachable_nonterminals,
-)
+from avicenna import DerivationTree, Grammar, reachable_nonterminals, is_nonterminal
+from dbg.data.oracle import OracleResult
 
 
 class Feature(ABC):
@@ -19,18 +14,18 @@ class Feature(ABC):
     def __repr__(self) -> str:
         return (
             self._repr()
-            .replace('"', "&quot;")
-            .replace(",", "&comma;")
-            .replace("[", "&lsqb;")
-            .replace("]", "&rsqb;")
-            .replace("{", "&lcub;")
-            .replace("}", "&rcub;")
-            .replace(":", "&colon;")
-            .replace("'", "&#39;")
-            .replace(" ", "&nbsp;")
-            .replace("\n", "&#13;")
-            # .replace("\r", "&#60;")
-            .replace("\\", "")
+            # .replace('"', "&quot;")
+            # .replace(",", "&comma;")
+            # .replace("[", "&lsqb;")
+            # .replace("]", "&rsqb;")
+            # .replace("{", "&lcub;")
+            # .replace("}", "&rcub;")
+            # .replace(":", "&colon;")
+            # .replace("'", "&#39;")
+            # .replace(" ", "&nbsp;")
+            # .replace("\n", "&#13;")
+            # # .replace("\r", "&#60;")
+            # .replace("\\", "")
         )
 
     @abstractmethod
