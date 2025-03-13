@@ -1,11 +1,13 @@
 from typing import Set, Optional
 
-
-
 from dbg.generator.generator import Generator
 
+from avicenna import Grammar, ISLaSolver
+from avicenna._data import AvicennaInput
+from avicenna._learner import AvicennaExplanation
 
-class ISLaSolverGenerator(Generator):
+
+class AvicennaGenerator(Generator):
     """
     A generator that uses the ISLa Solver to generate inputs.
     """
@@ -15,25 +17,25 @@ class ISLaSolverGenerator(Generator):
         self.solver: Optional[ISLaSolver] = None
         self.enable_optimized_z3_queries = enable_optimized_z3_queries
 
-    def generate(self, **kwargs) -> Optional[Input]:
+    def generate(self, **kwargs) -> Optional[AvicennaInput]:
         """
         Generate an input to be used in the debugging process using the ISLa Solver.
         """
         try:
             tree = self.solver.solve()
-            return Input(tree=tree)
+            return AvicennaInput(tree=tree)
         except (StopIteration, RuntimeError):
             return None
 
     def generate_test_inputs(
-        self, num_inputs: int = 5, candidate: Candidate = None, **kwargs
-    ) -> Set[Input]:
+        self, num_inputs: int = 5, explanation: AvicennaExplanation = None, **kwargs
+    ) -> Set[AvicennaInput]:
         """
         Generate multiple inputs to be used in the debugging process.
         """
         test_inputs = set()
-        if candidate is not None:
-            self.initialize_solver(candidate.formula)
+        if explanation is not None:
+            self.initialize_solver(explanation.explanation)
             for _ in range(num_inputs):
                 inp = self.generate(**kwargs)
                 if inp:

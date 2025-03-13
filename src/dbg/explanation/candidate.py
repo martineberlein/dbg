@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from dbg.data.input import Input
+# from dbg.learner.metric import FitnessStrategy
+
 
 class Explanation(ABC):
     """
@@ -17,7 +19,7 @@ class Explanation(ABC):
         self.cache: dict[Input, bool] = {}
 
     @abstractmethod
-    def evaluate(self, inputs):
+    def evaluate(self, test_inputs: set[Input], *args, **kwargs):
         pass
 
     def recall(self) -> float:
@@ -48,21 +50,44 @@ class Explanation(ABC):
             self.passing_inputs_eval_results
         )
 
-    def __and__(self, other):
-        pass
-
-    def __or__(self, other):
-        pass
-
-    @abstractmethod
-    def __neg__(self):
-        pass
+    # def with_strategy(self, strategy: FitnessStrategy):
+    #     """
+    #     Return the evaluation of the candidate with a given fitness strategy.
+    #     """
+    #     return strategy.evaluate(self)
 
     def __hash__(self):
         return self.__hash
 
     def __len__(self):
         return len(str(self.explanation))
+
+    def __repr__(self):
+        """
+        Return a string representation of the explanation.
+        """
+        return f"Explanation({str(self.explanation)}, precision={self.precision()}, recall={self.recall()}"
+
+    def __str__(self):
+        """
+        Return a string representation of the explanation.
+        """
+        return str(self.explanation)
+
+    def __eq__(self, other):
+        """
+        Return whether two candidates are equal.
+        """
+        return isinstance(other, Explanation) and self.explanation == other.explanation
+
+    def __and__(self, other):
+        pass
+
+    def __or__(self, other):
+        pass
+
+    def __neg__(self):
+        pass
 
 
 class ExplanationSet:
