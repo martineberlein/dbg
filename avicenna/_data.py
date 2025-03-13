@@ -29,7 +29,7 @@ class AvicennaInput(Input):
         return self
 
     def __hash__(self) -> int:
-        return self.__tree.structural_hash()
+        return self._tree.structural_hash()
 
     @classmethod
     def from_str(cls, grammar, input_string, oracle: Optional[OracleResult] = None):
@@ -41,4 +41,7 @@ class AvicennaInput(Input):
         )
 
 
-__all__ = ["AvicennaInput"]
+__all__ = [
+    "AvicennaInput",
+    "OracleResult",
+]

@@ -17,8 +17,8 @@ class Input(ABC):
         :param tree: The derivation tree of the input.
         :param OracleResult oracle: The optional oracle result associated with the input.
         """
-        self.__tree: Final = tree
-        self.__oracle: Optional[OracleResult] = oracle
+        self._tree: Final = tree
+        self._oracle: Optional[OracleResult] = oracle
 
     @property
     def tree(self) -> Any:
@@ -26,7 +26,7 @@ class Input(ABC):
         Retrieves the derivation tree of the input.
         :return DerivationTree: The derivation tree.
         """
-        return self.__tree
+        return self._tree
 
     @property
     def oracle(self) -> OracleResult:
@@ -34,7 +34,7 @@ class Input(ABC):
         Retrieves the oracle result associated with the input.
         :return OracleResult: The oracle result, or None if not set.
         """
-        return self.__oracle
+        return self._oracle
 
     @oracle.setter
     def oracle(self, oracle_: OracleResult):
@@ -42,7 +42,7 @@ class Input(ABC):
         Sets the oracle result for the input.
         :param OracleResult oracle_: The new oracle result to set.
         """
-        self.__oracle = oracle_
+        self._oracle = oracle_
 
     def update_oracle(self, oracle_: OracleResult) -> "Input":
         """
@@ -50,7 +50,7 @@ class Input(ABC):
         :param OracleResult oracle_: The new oracle result to set.
         :return Input: The current input instance with the updated oracle.
         """
-        self.__oracle = oracle_
+        self._oracle = oracle_
         return self
 
     def __repr__(self) -> str:
@@ -65,7 +65,7 @@ class Input(ABC):
         Provides a user-friendly string representation of the Input's derivation tree.
         :return str: The string representation of the derivation tree.
         """
-        return str(self.__tree)
+        return str(self._tree)
 
     @abstractmethod
     def __hash__(self) -> int:
