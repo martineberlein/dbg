@@ -1,4 +1,3 @@
-import logging
 from typing import List, Tuple, Optional, Iterable, Set
 import itertools
 
@@ -14,9 +13,7 @@ from dbg.learner.pattern_learner import PatternLearner
 from avicenna._data import AvicennaInput
 from avicenna._learner import AvicennaExplanation
 from avicenna._learning._constructor import AtomicFormulaInstantiation
-
-
-logger = logging.getLogger("learner")
+from avicenna import get_pattern_file_path
 
 
 class OptimizedISLearnLearner(
@@ -26,18 +23,21 @@ class OptimizedISLearnLearner(
     def __init__(
         self,
         grammar: Grammar,
-        patterns: Optional[List[Formula]] = None,
+        pattern_file: str = None,
         min_recall: float = 0.9,
         min_specificity: float = 0.6,
     ):
+        if not pattern_file:
+            pattern_file = get_pattern_file_path()
+
         super().__init__(
             grammar,
-            patterns=patterns,
+            patterns=pattern_file,
             min_recall=min_recall,
             min_precision=min_specificity,
         )
 
-        self.atomic_candidate_constructor = AtomicFormulaInstantiation(grammar, self.patterns)
+        self.atomic_candidate_constructor = AtomicFormulaInstantiation(grammar, pattern_file=pattern_file)
 
         self.max_conjunction_size = 2
         self.all_negative_inputs: Set[AvicennaInput] = set()
@@ -49,7 +49,7 @@ class OptimizedISLearnLearner(
         self.removed_explanations: set[AvicennaExplanation] = set()
 
     def parse_patterns(self, patterns):
-        raise NotImplementedError()
+        print(patterns)
 
     def learn_explanation(self,
           test_inputs: set[AvicennaInput],
@@ -76,7 +76,7 @@ class OptimizedISLearnLearner(
     ) -> ExplanationSet[AvicennaExplanation]:
 
         LOGGER.info("Starting creating atomic candidates")
-        atomic_formulas = self.construct_atomic_candidates(
+        atomic_formulas = self.atomic_candidate_constructor.construct_candidates(
             self.all_positive_inputs, self.exclude_nonterminals
         )
         new_explanations = {AvicennaExplanation(formula) for formula in atomic_formulas}
@@ -103,6 +103,10 @@ class OptimizedISLearnLearner(
             explanations_to_evaluate, positive_inputs, negative_inputs
         )
 
+        for explanation in self.explanations:
+            print(
+                explanation, explanation.recall(), explanation.specificity()
+            )
         conjunction_candidates = self.get_conjunctions(self.explanations)
         for candidate in conjunction_candidates:
             self.explanations.append(candidate)
@@ -143,12 +147,12 @@ class OptimizedISLearnLearner(
             self, candidate: AvicennaExplanation, positive_inputs, negative_inputs
     ):
         try:
-            candidate.evaluate(positive_inputs)
+            candidate.evaluate(positive_inputs, graph=self.graph)
             if candidate.recall() >= self.min_recall:
-                candidate.evaluate(negative_inputs)
+                candidate.evaluate(negative_inputs, graph=self.graph)
                 return True
         except Exception as e:
-            LOGGER.debug(
+            LOGGER.info(
                 "Error when evaluation candidate %s: %s", candidate.explanation, e
             )
         return False
@@ -205,13 +209,15 @@ class OptimizedISLearnLearner(
             for candidate in combination[1:]:
                 conjunction = conjunction & candidate
 
-            conjunction.formula = language.ensure_unique_bound_variables(
-                conjunction.formula
+            conjunction.explanation = language.ensure_unique_bound_variables(
+                conjunction.explanation
             )
 
             if self.is_new_conjunction_valid(conjunction, combination):
                 con_counter += 1
                 conjunctions.append(conjunction)
+
+
         return conjunctions
 
     def get_possible_conjunctions(self, explanation_set: ExplanationSet[AvicennaExplanation]) -> List[Tuple[AvicennaExplanation, ...]]:
