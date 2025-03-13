@@ -41,8 +41,9 @@ if __name__ == "__main__":
 
     explanations = alhazen.explain()
 
+    # sorting needs to be done here
     for explanation in explanations:
-        print(explanation)
+        print(explanation, explanation.precision(), explanation.recall())
 
     # from fuzzingbook.GrammarFuzzer import GrammarFuzzer
     # from alhazen._data import AlhazenInput
