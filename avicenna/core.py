@@ -1,25 +1,15 @@
-from typing import Iterable, Set, Optional, List
-from pathlib import Path
+from typing import Iterable, Set
 
-from debugging_framework.fuzzingbook.grammar import Grammar
-from debugging_framework.types import OracleType
+
 
 from dbg.core import HypothesisBasedExplainer
-from .data.input_data import Input
-from .learning.learner import CandidateLearner
-from .learning.table import Candidate
-from .learning.exhaustive import ExhaustivePatternCandidateLearner
-from .generator.generator import Generator, ISLaGrammarBasedGenerator, ISLaSolverGenerator
-from .generator import engine as engine
-from .runner.execution_handler import ExecutionHandler
-from .learning.reducer import (
-    FeatureReducer,
-    SHAPRelevanceLearner,
-    GradientBoostingTreeRelevanceLearner,
-    DecisionTreeRelevanceLearner,
-)
-from .features.feature_collector import GrammarFeatureCollector
 from dbg.logger import LOGGER
+from dbg.explanation.candidate import ExplanationSet
+from dbg.types import OracleType, Grammar
+
+from avicenna._data import AvicennaInput
+from avicenna.features.feature_collector import GrammarFeatureCollector
+
 
 class Avicenna(HypothesisBasedExplainer):
     """
@@ -31,33 +21,14 @@ class Avicenna(HypothesisBasedExplainer):
         self,
         grammar: Grammar,
         oracle: OracleType,
-        initial_inputs: Iterable[Input | str],
-        max_iterations: int = 10,
-        timeout_seconds: int = 3600,
+        initial_inputs: Iterable[AvicennaInput | str],
         top_n_relevant_features: int = 3,
-        learner: CandidateLearner = None,
-        pattern_file: Path = None,
         min_recall: float = 0.9,
         min_specificity: float = 0.6,
-        generator: Generator = None,
-        runner: ExecutionHandler = None,
-        use_fast_evaluation: bool = True,
         **kwargs,
     ):
-        learner_parameter = {
-            "grammar": grammar,
-            "pattern_file": pattern_file,
-            "min_recall": min_recall,
-            "min_specificity": min_specificity,
-            "use_fast_evaluation": use_fast_evaluation,
-        }
-        learner = (
-            learner
-            if learner
-            else ExhaustivePatternCandidateLearner(**learner_parameter)
-        )
-        generator = generator if generator else ISLaGrammarBasedGenerator(grammar)
-        self.engine: engine.Engine = engine.SingleEngine(generator)
+        learner = ExhaustivePatternCandidateLearner()
+        generator = ISLaGrammarBasedGenerator(grammar)
 
         super().__init__(
             grammar,
@@ -65,42 +36,46 @@ class Avicenna(HypothesisBasedExplainer):
             initial_inputs,
             learner=learner,
             generator=generator,
-            runner=runner,
-            timeout_seconds=timeout_seconds,
-            max_iterations=max_iterations,
             **kwargs,
         )
 
-        self.feature_learner: FeatureReducer = SHAPRelevanceLearner(
-            self.grammar,
-            top_n_relevant_features=top_n_relevant_features,
-            classifier_type=GradientBoostingTreeRelevanceLearner,
-        )
         self.feature_learner = DecisionTreeRelevanceLearner(
             self.grammar,
             top_n_relevant_features=top_n_relevant_features,
         )
-
         self.collector = GrammarFeatureCollector(self.grammar)
-        self.max_candidates = 5
 
-    def set_feature_reducer(self, feature_reducer: FeatureReducer):
+    def set_initial_inputs(self, test_inputs: Iterable[str]) -> set[AvicennaInput]:
         """
-        Set the feature learner to reduce the input features.
-        """
-        self.feature_learner = feature_reducer
+        Converts a set of string test inputs into AlhazenInput objects,
+        incorporating oracle classification.
 
-    def assign_test_inputs_features(self, test_inputs: Set[Input]) -> Set[Input]:
+        Args:
+            test_inputs (Iterable[str]): The test inputs as strings.
+
+        Returns:
+            set[AlhazenInput]: The converted test inputs as AlhazenInput objects.
         """
-        Assign the features to the test inputs using the feature collector.
+        return {
+            AvicennaInput.from_str(self.grammar, inp, self.oracle(inp))
+            for inp in test_inputs
+        }
+
+    def prepare_test_inputs(self, test_inputs: set[AvicennaInput]) -> set[AvicennaInput]:
+        """
+        Prepares test inputs by collecting their grammar-based features.
+
+        Args:
+            test_inputs (set[AvicennaInput]): The test inputs to process.
+
+        Returns:
+            Set[AlhazenInput]: The updated set of test inputs with extracted features.
         """
         for inp in test_inputs:
-            if not inp.features:
-                inp.features = self.collector.collect_features(inp)
+            inp.features = self.collector.collect_features(inp)
         return test_inputs
 
-    @logging.log_execution_with_report(logging.relevant_feature_report)
-    def get_relevant_features(self, test_inputs: Set[Input]) -> Set[str]:
+    def get_relevant_features(self, test_inputs: Set[AvicennaInput]) -> Set[str]:
         """
         Get the relevant features based on the test inputs.
         """
@@ -110,8 +85,7 @@ class Avicenna(HypothesisBasedExplainer):
         }
         return relevant_feature_non_terminals
 
-    @logging.log_execution_with_report(logging.irrelevant_feature_report)
-    def get_irrelevant_features(self, test_inputs: Set[Input]) -> Set[str]:
+    def get_irrelevant_features(self, test_inputs: Set[AvicennaInput]) -> Set[str]:
         """
         Get the irrelevant features based on the test inputs.
         """
@@ -122,38 +96,25 @@ class Avicenna(HypothesisBasedExplainer):
         )
         return irrelevant_features
 
-    @logging.log_execution_with_report(logging.learner_report)
-    def learn_candidates(self, test_inputs: Set[Input]) -> Optional[List[Candidate]]:
+    def learn_candidates(self, test_inputs: Set[AvicennaInput]) -> ExplanationSet:
         """
         Learn the candidates based on the test inputs. The candidates are ordered based on their scores.
         :param test_inputs: The test inputs to learn the candidates from.
         :return Optional[List[Candidate]]: The learned candidates.
         """
         irrelevant_features = self.get_irrelevant_features(test_inputs)
-        _ = self.learner.learn_candidates(
+        _ = self.learner.learn_explanation(
             test_inputs, exclude_nonterminals=irrelevant_features
         )
-        candidates = self.learner.get_best_candidates()
-        return candidates[:self.max_candidates]
+        explanations = self.learner.get_best_candidates()
+        return explanations
 
-    @logging.log_execution_with_report(logging.generator_report)
-    def generate_test_inputs(self, candidates: List[Candidate]) -> Set[Input]:
+    def generate_test_inputs(self, explanations: ExplanationSet) -> Set[AvicennaInput]:
         """
         Generate the test inputs based on the learned candidates.
-        :param candidates: The learned candidates.
+        :param explanations: The learned explanations.
         :return Set[Input]: The generated test inputs.
         """
-        test_inputs = self.engine.generate(candidates=candidates)
+        LOGGER.info("Generating test inputs.")
+        test_inputs = self.engine.generate(explanations=explanations)
         return test_inputs
-
-    @logging.log_execution_with_report(logging.runner_report)
-    def run_test_inputs(self, test_inputs: Set[Input]) -> Set[Input]:
-        """
-        Run the test inputs to label them. The test inputs are labeled based on the oracle.
-        Feature vectors are assigned to the test inputs.
-        :param test_inputs: The test inputs to run.
-        :return Set[Input]: The labeled test inputs.
-        """
-        labeled_test_inputs = self.runner.label(test_inputs=test_inputs)
-        feature_test_inputs = self.assign_test_inputs_features(labeled_test_inputs)
-        return feature_test_inputs
