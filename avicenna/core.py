@@ -1,14 +1,14 @@
 from typing import Iterable, Set
 
-
-
 from dbg.core import HypothesisBasedExplainer
 from dbg.logger import LOGGER
 from dbg.explanation.candidate import ExplanationSet
 from dbg.types import OracleType, Grammar
 
+from avicenna._generator import AvicennaISLaGrammarBasedGenerator
 from avicenna._data import AvicennaInput
 from avicenna.features.feature_collector import GrammarFeatureCollector
+from avicenna._learner import OptimizedISLearnLearner
 
 
 class Avicenna(HypothesisBasedExplainer):
@@ -27,8 +27,9 @@ class Avicenna(HypothesisBasedExplainer):
         min_specificity: float = 0.6,
         **kwargs,
     ):
-        learner = ExhaustivePatternCandidateLearner()
-        generator = ISLaGrammarBasedGenerator(grammar)
+        patterns = None
+        learner = OptimizedISLearnLearner(grammar,patterns, min_recall, min_specificity)
+        generator = AvicennaISLaGrammarBasedGenerator(grammar)
 
         super().__init__(
             grammar,
