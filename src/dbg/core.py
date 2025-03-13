@@ -178,14 +178,11 @@ class HypothesisBasedExplainer(InputExplainer, ABC):
         labeled_test_inputs = self.run_test_inputs(inputs)
         return labeled_test_inputs
 
-    @abstractmethod
     def prepare_test_inputs(self, test_inputs) -> Set[Input]:
         """
         Prepare the input feature debugger.
+        Default implementation returns the test inputs as is.
         """
-        test_inputs: Set[Input] = self.get_test_inputs_from_strings(test_inputs)
-        test_inputs = self.run_test_inputs(test_inputs)
-        # self.check_initial_conditions(test_inputs)
         return test_inputs
 
     @abstractmethod
