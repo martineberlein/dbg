@@ -7,8 +7,8 @@ from dbg.types import OracleType, Grammar
 
 from avicenna._generator import AvicennaISLaGrammarBasedGenerator
 from avicenna._data import AvicennaInput
-from avicenna.features.feature_collector import GrammarFeatureCollector
-from avicenna._learner import OptimizedISLearnLearner
+from avicenna._learning._islearn import OptimizedISLearnLearner
+# from avicenna.features.feature_collector import GrammarFeatureCollector
 
 
 class Avicenna(HypothesisBasedExplainer):
@@ -22,9 +22,9 @@ class Avicenna(HypothesisBasedExplainer):
         grammar: Grammar,
         oracle: OracleType,
         initial_inputs: Iterable[AvicennaInput | str],
-        top_n_relevant_features: int = 3,
         min_recall: float = 0.9,
         min_specificity: float = 0.6,
+        top_n_relevant_features: int = 3,
         **kwargs,
     ):
         patterns = None
@@ -40,11 +40,11 @@ class Avicenna(HypothesisBasedExplainer):
             **kwargs,
         )
 
-        self.feature_learner = DecisionTreeRelevanceLearner(
-            self.grammar,
-            top_n_relevant_features=top_n_relevant_features,
-        )
-        self.collector = GrammarFeatureCollector(self.grammar)
+        # self.feature_learner = DecisionTreeRelevanceLearner(
+        #     self.grammar,
+        #     top_n_relevant_features=top_n_relevant_features,
+        # )
+        # self.collector = GrammarFeatureCollector(self.grammar)
 
     def set_initial_inputs(self, test_inputs: Iterable[str]) -> set[AvicennaInput]:
         """
@@ -62,40 +62,26 @@ class Avicenna(HypothesisBasedExplainer):
             for inp in test_inputs
         }
 
-    def prepare_test_inputs(self, test_inputs: set[AvicennaInput]) -> set[AvicennaInput]:
-        """
-        Prepares test inputs by collecting their grammar-based features.
-
-        Args:
-            test_inputs (set[AvicennaInput]): The test inputs to process.
-
-        Returns:
-            Set[AlhazenInput]: The updated set of test inputs with extracted features.
-        """
-        for inp in test_inputs:
-            inp.features = self.collector.collect_features(inp)
-        return test_inputs
-
-    def get_relevant_features(self, test_inputs: Set[AvicennaInput]) -> Set[str]:
-        """
-        Get the relevant features based on the test inputs.
-        """
-        relevant_features = self.feature_learner.learn(test_inputs)
-        relevant_feature_non_terminals = {
-            feature.non_terminal for feature in relevant_features
-        }
-        return relevant_feature_non_terminals
-
-    def get_irrelevant_features(self, test_inputs: Set[AvicennaInput]) -> Set[str]:
-        """
-        Get the irrelevant features based on the test inputs.
-        """
-        relevant_feature_non_terminals = self.get_relevant_features(test_inputs)
-
-        irrelevant_features = set(self.grammar.keys()).difference(
-            relevant_feature_non_terminals
-        )
-        return irrelevant_features
+    # def get_relevant_features(self, test_inputs: Set[AvicennaInput]) -> Set[str]:
+    #     """
+    #     Get the relevant features based on the test inputs.
+    #     """
+    #     relevant_features = self.feature_learner.learn(test_inputs)
+    #     relevant_feature_non_terminals = {
+    #         feature.non_terminal for feature in relevant_features
+    #     }
+    #     return relevant_feature_non_terminals
+    #
+    # def get_irrelevant_features(self, test_inputs: Set[AvicennaInput]) -> Set[str]:
+    #     """
+    #     Get the irrelevant features based on the test inputs.
+    #     """
+    #     relevant_feature_non_terminals = self.get_relevant_features(test_inputs)
+    #
+    #     irrelevant_features = set(self.grammar.keys()).difference(
+    #         relevant_feature_non_terminals
+    #     )
+    #     return irrelevant_features
 
     def learn_candidates(self, test_inputs: Set[AvicennaInput]) -> ExplanationSet:
         """
@@ -103,9 +89,9 @@ class Avicenna(HypothesisBasedExplainer):
         :param test_inputs: The test inputs to learn the candidates from.
         :return Optional[List[Candidate]]: The learned candidates.
         """
-        irrelevant_features = self.get_irrelevant_features(test_inputs)
+        # irrelevant_features = self.get_irrelevant_features(test_inputs)
         _ = self.learner.learn_explanation(
-            test_inputs, exclude_nonterminals=irrelevant_features
+            test_inputs# , exclude_nonterminals=irrelevant_features
         )
         explanations = self.learner.get_best_candidates()
         return explanations
