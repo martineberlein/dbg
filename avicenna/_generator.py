@@ -1,8 +1,11 @@
 from typing import Set, Optional
 
-from dbg.generator.generator import Generator
+from isla.fuzzer import GrammarFuzzer
 
-from avicenna import Grammar, ISLaSolver
+from dbg.generator.generator import Generator
+from dbg.types import Grammar
+
+from avicenna import ISLaSolver
 from avicenna._data import AvicennaInput
 from avicenna._learner import AvicennaExplanation
 
@@ -51,3 +54,20 @@ class AvicennaGenerator(Generator):
             constraint,
             enable_optimized_z3_queries=self.enable_optimized_z3_queries,
         )
+
+
+class AvicennaISLaGrammarBasedGenerator(Generator):
+    """
+    A generator that uses the ISLa Grammar-based Fuzzer to generate inputs.
+    This generator directly produces the derivation trees, which is more efficient than the FuzzingbookBasedGenerator.
+    """
+
+    def __init__(self, grammar: Grammar, **kwargs):
+        super().__init__(grammar)
+        self.fuzzer = GrammarFuzzer(grammar, max_nonterminals=20)
+
+    def generate(self, **kwargs) -> AvicennaInput:
+        """
+        Generate an input to be used in the debugging process.
+        """
+        return AvicennaInput(tree=self.fuzzer.fuzz_tree())
