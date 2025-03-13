@@ -19,11 +19,11 @@ class AtomicFormulaInstantiation(InvariantLearner):
     def __init__(
         self,
         grammar,
-        patterns: Optional[List[Formula]] = None,
+        pattern_file: str = None,
     ):
         super().__init__(
             grammar=grammar,
-            patterns=patterns,
+            pattern_file=pattern_file,
             filter_inputs_for_learning_by_kpaths=False,
         )
 

@@ -39,8 +39,8 @@ import importlib.resources as pkg_resources
 
 
 def get_pattern_file_path():
-    return pkg_resources.files("avicenna.resources") / "patterns.toml"
+    return pkg_resources.files("avicenna") / "patterns.toml"
 
 
 def get_islearn_pattern_file_path():
-    return pkg_resources.files("avicenna.resources") / "patterns_islearn.toml"
+    return pkg_resources.files("avicenna") / "patterns_islearn.toml"
