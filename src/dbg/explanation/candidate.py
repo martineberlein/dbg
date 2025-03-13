@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Generic, TypeVar
 
 from dbg.data.input import Input
-# from dbg.learner.metric import FitnessStrategy
 
 
 class Explanation(ABC):
@@ -90,63 +89,42 @@ class Explanation(ABC):
         pass
 
 
-class ExplanationSet:
+T = TypeVar("T", bound=Explanation)
 
-    def __init__(self, explanations: Optional[list[Explanation]] = None):
-        self.explanation_hashes = dict()
-        self.explanations = []
+class ExplanationSet(Generic[T]):
+    def __init__(self, explanations: Optional[list[T]] = None):
+        self.explanation_hashes: dict[int, int] = {}
+        self.explanations: list[T] = []
 
         explanations = explanations or []
-
         for idx, explanation in enumerate(explanations):
             explanation_hash = hash(explanation)
             if explanation_hash not in self.explanation_hashes:
                 self.explanation_hashes[explanation_hash] = idx
                 self.explanations.append(explanation)
 
-    def __repr__(self):
-        """
-        Return a string representation of the candidate set and its candidates.
-        """
+    def __repr__(self) -> str:
         return f"CandidateSet({repr(self.explanations)})"
 
-    def __str__(self):
-        """
-        Return a string representation of the candidate set and its candidates.
-        """
+    def __str__(self) -> str:
         return "\n".join(map(str, self.explanations))
 
-    def __len__(self):
-        """
-        Return the number of candidates in the candidate set.
-        """
+    def __len__(self) -> int:
         return len(self.explanations)
 
     def __iter__(self):
-        """
-        Iterate over the candidates in the candidate set.
-        """
         return iter(self.explanations)
 
-    def __add__(self, other):
-        """
-        Add two candidate sets together.
-        """
+    def __add__(self, other: "ExplanationSet[T]") -> "ExplanationSet[T]":
         return ExplanationSet(self.explanations + other.explanations)
 
-    def append(self, candidate: Explanation):
-        """
-        Add a candidate to the candidate set.
-        """
+    def append(self, candidate: T) -> None:
         candidate_hash = hash(candidate)
         if candidate_hash not in self.explanation_hashes:
             self.explanation_hashes[candidate_hash] = len(self.explanations)
             self.explanations.append(candidate)
 
-    def remove(self, candidate: Explanation):
-        """
-        Remove a candidate from the candidate set.
-        """
+    def remove(self, candidate: T) -> None:
         candidate_hash = hash(candidate)
         if candidate_hash in self.explanation_hashes:
             last_elem, idx = self.explanations[-1], self.explanation_hashes[candidate_hash]
