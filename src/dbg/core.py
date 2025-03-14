@@ -185,21 +185,25 @@ class HypothesisBasedExplainer(InputExplainer, ABC):
         """
         return test_inputs
 
-    @abstractmethod
+    # @abstractmethod
     def learn_candidates(self, test_inputs: Set[Input]) -> ExplanationSet:
         """
         Learn the candidates (failure diagnoses) from the test inputs.
         """
-        raise NotImplementedError()
+        LOGGER.info("Learning candidates.")
+        explanations = self.learner.learn_explanation(test_inputs)
+        return explanations
 
-    @abstractmethod
-    def generate_test_inputs(self, candidates: ExplanationSet) -> Set[Input]:
+    # @abstractmethod
+    def generate_test_inputs(self, explanations: ExplanationSet) -> Set[Input]:
         """
         Generate the test inputs based on the learned candidates.
-        :param candidates: The learned candidates.
+        :param explanations: The learned candidates.
         :return Set[Input]: The generated test inputs.
         """
-        raise NotImplementedError()
+        LOGGER.info("Generating test inputs.")
+        test_inputs = self.engine.generate(explanations=explanations)
+        return test_inputs
 
     def create_hypotheses(self, candidates: ExplanationSet) -> ExplanationSet:
         """
