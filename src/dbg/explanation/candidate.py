@@ -49,12 +49,6 @@ class Explanation(ABC):
             self.passing_inputs_eval_results
         )
 
-    # def with_strategy(self, strategy: FitnessStrategy):
-    #     """
-    #     Return the evaluation of the candidate with a given fitness strategy.
-    #     """
-    #     return strategy.evaluate(self)
-
     def __hash__(self):
         return self.__hash
 
@@ -104,7 +98,7 @@ class ExplanationSet(Generic[T]):
                 self.explanations.append(explanation)
 
     def __repr__(self) -> str:
-        return f"CandidateSet({repr(self.explanations)})"
+        return f"ExplanationSet({repr(self.explanations)})"
 
     def __str__(self) -> str:
         return "\n".join(map(str, self.explanations))
