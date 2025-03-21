@@ -82,6 +82,11 @@ class Explanation(ABC):
     def __neg__(self):
         pass
 
+    def reset(self):
+        self.failing_inputs_eval_results = []
+        self.passing_inputs_eval_results = []
+        self.cache = {}
+
 
 T = TypeVar("T", bound=Explanation)
 
