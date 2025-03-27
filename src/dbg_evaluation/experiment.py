@@ -8,6 +8,7 @@ from typing import Iterable
 
 from dbg.data.input import Input
 from dbg.learner.learner import Learner
+from dbg.core import HypothesisBasedExplainer
 from dbg.types import OracleType
 from dbg_evaluation.util import format_results
 
@@ -18,10 +19,10 @@ def stable_hash(value: str, length: int = 8) -> str:
 
 class Experiment(ABC):
 
-    def __init__(self, name: str, subject_name: str, learner: Learner, grammar, initial_inputs: set, oracle: OracleType, evaluation_inputs: set = None):
+    def __init__(self, name: str, subject_name: str, tool: Learner | HypothesisBasedExplainer, grammar, initial_inputs: set, oracle: OracleType, evaluation_inputs: set = None):
         self.name: str = name
         self.subject_name: str = subject_name
-        self.learner: Learner = learner
+        self.tool = tool
 
         self.grammar = grammar
         self.oracle = oracle
@@ -29,30 +30,16 @@ class Experiment(ABC):
 
         self.evaluation_inputs = evaluation_inputs if evaluation_inputs else self.get_evaluation_inputs()
 
+    @abstractmethod
     def evaluate(self, seed = 1, **kwargs):
-        random.seed(seed)
-        start_time_learning = time.time()
-
-        explanations = self.learner.learn_explanation(
-            test_inputs=self.initial_inputs,
-            **kwargs,
-        )
-
-        end_time_learning = time.time()
-
-        # round time
-        time_in_seconds = round(end_time_learning - start_time_learning, 4)
-
-        return format_results(
-            "Calculator", explanations, time_in_seconds, self.evaluation_inputs
-        )
+        raise NotImplementedError()
 
     @abstractmethod
     def get_evaluation_inputs(self, **kwargs):
         """
         Generate the evaluation inputs.
         """
-        pass
+        raise NotImplementedError()
 
     @staticmethod
     def write_to_file(inputs: Iterable[Input], subject_name: str):
