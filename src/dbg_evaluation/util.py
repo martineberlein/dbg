@@ -1,4 +1,6 @@
 from typing import List, Set
+import os
+import csv
 
 from dbg.explanation.candidate import Explanation, ExplanationSet
 from dbg.data.input import Input
@@ -84,6 +86,8 @@ def format_results(
     candidates: List[Explanation] | ExplanationSet,
     time_in_seconds: float,
     evaluation_inputs: set[Input],
+    seed: int,
+    **kwargs,
 ):
     sorting_strategy = RecallPriorityFitness()
 
@@ -91,7 +95,7 @@ def format_results(
 
     for candidate in candidates:
         candidate.reset()
-        candidate.evaluate(evaluation_inputs)
+        candidate.evaluate(evaluation_inputs, **kwargs)
 
     sorted_candidates = sorted(
         candidates,
@@ -106,9 +110,44 @@ def format_results(
 
     return {
         "name": name,
+        "seed": seed,
         "candidates": candidates if candidates else None,
         "time_in_seconds": time_in_seconds,
         "best_candidates": best_candidate if candidates else None,
         "precision": best_candidate[0].precision() if candidates else None,
         "recall": best_candidate[0].recall() if candidates else None,
     }
+
+
+def save_results_to_csv(results, filename):
+    keys = [
+        "name",
+        "seed",
+        "time_in_seconds",
+        "precision",
+        "recall",
+        "num_candidates",
+        "num_best_candidates"
+    ]
+
+    file_exists = os.path.isfile(filename)
+    is_empty = not file_exists or os.stat(filename).st_size == 0
+
+    with open(filename, "a", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=keys)
+
+        if is_empty:
+            writer.writeheader()
+
+        for result in results:
+            row = {
+                "name": result.get("name"),
+                "seed": result.get("seed"),
+                "time_in_seconds": result.get("time_in_seconds"),
+                "precision": result.get("precision"),
+                "recall": result.get("recall"),
+                "num_candidates": len(result.get("candidates") or []),
+                "num_best_candidates": len(result.get("best_candidates") or []),
+            }
+            writer.writerow(row)
+
