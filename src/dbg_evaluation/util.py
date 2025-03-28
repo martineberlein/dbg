@@ -93,12 +93,17 @@ def format_results(
 
     candidates = candidates or []
 
+    explanations = []
     for candidate in candidates:
         candidate.reset()
-        candidate.evaluate(evaluation_inputs, **kwargs)
+        try:
+            candidate.evaluate(evaluation_inputs, **kwargs)
+            explanations.append(candidate)
+        except Exception:
+            continue
 
     sorted_candidates = sorted(
-        candidates,
+        explanations,
         key=lambda c: sorting_strategy.evaluate(c),
         reverse=True,
     )
