@@ -1,6 +1,7 @@
 from typing import List, Set
 import os
 import csv
+import contextlib
 
 from dbg.explanation.candidate import Explanation, ExplanationSet
 from dbg.data.input import Input
@@ -97,9 +98,11 @@ def format_results(
     for candidate in candidates:
         candidate.reset()
         try:
-            candidate.evaluate(evaluation_inputs, **kwargs)
-            explanations.append(candidate)
-        except Exception:
+            # Redirect sys.stderr to a null file during the call, Fandango allways prints to stderr
+            with open(os.devnull, "w") as null_file, contextlib.redirect_stderr(null_file):
+                candidate.evaluate(evaluation_inputs, **kwargs)
+                explanations.append(candidate)
+        except Exception as e:
             continue
 
     sorted_candidates = sorted(
@@ -121,6 +124,8 @@ def format_results(
         "best_candidates": best_candidate if candidates else None,
         "precision": best_candidate[0].precision() if candidates else None,
         "recall": best_candidate[0].recall() if candidates else None,
+        "avg_precision": sum(c.precision() for c in sorted_candidates) / len(sorted_candidates) if sorted_candidates else None,
+        "avg_recall": sum(c.recall() for c in sorted_candidates) / len(sorted_candidates) if sorted_candidates else None,
     }
 
 
